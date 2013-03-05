@@ -1,0 +1,9 @@
+include README.rst
+include LICENSE.txt
+include CHANGES.txt
+recursive-include html *.html *.css *.png *.gif *.js *.inv *.txt
+recursive-include docs *.png
+include . *.pdf
+include PackageInfo.cfg
+recursive-include examples *
+recursive-include pyfscache *.yml
