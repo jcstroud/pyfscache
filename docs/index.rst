@@ -142,9 +142,9 @@ and even built-ins:
 
 .. note::
 
-           The rule of thumb is that if python's *cPickle* module
-           can handle the expected arguments to the cached function,
-           then so can pyfscache.
+    The rule of thumb is that if python's :py:mod:`cPickle`
+    module can handle the expected arguments to the cached
+    function, then so can pyfscache.
 
 
 API

@@ -5,6 +5,7 @@ import unittest
 
 
 from pyfscache.fscache import *
+from pyfscache.fscache import LifetimeError
 
 
 TESTCACHE = 'test-cache'
@@ -85,6 +86,11 @@ class FSCacheTestCase(unittest.TestCase):
     self.assertEquals(self.f[2], new_second)
   def test_011_path(self):
     self.assertEquals(self.f.path, self.path_name)
+  def test_012_negative_lifetime(self):
+    self.assertRaises(LifetimeError, FSCache,
+                      self.path_name, seconds=60, minutes=-2)
+    self.assertRaises(LifetimeError, FSCache,
+                      self.path_name, seconds=180, minutes=-3)
   def test_100_make_key(self):
     digest = 'a2VKynHgDrUIm17r6BQ5QcA5XVmqpNBmiKbZ9kTu0A'
     adict = {'a' : {'b':1}, 'f': []}

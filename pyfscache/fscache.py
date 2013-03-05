@@ -16,6 +16,9 @@ class CacheError(Exception):
 class TimeError(CacheError):
   pass
 
+class LifetimeError(CacheError):
+  pass
+
 class CacheObject(object):
   """
   A wrapper for values, to allow for more elaborate control
@@ -24,12 +27,12 @@ class CacheObject(object):
   """
   def __init__(self, value, expiration=None):
     """
-    Creates a new :class:`CacheObject` with an attribute ``value``
-    that is object passed by the `value` parameter. The `expiration`
-    should be the number of seconds since the epoch. See the python
-    :py:mod:`time` module for a discussion of the epoch. If
-    `expiration` is excluded, the the :class:`CacheObject` object
-    has no expiration.
+    Creates a new :class:`phyles.CacheObject` with an attribute
+    ``value`` that is object passed by the `value` parameter. The
+    `expiration` should be the number of seconds since the epoch.
+    See the python :py:mod:`time` module for a discussion of the
+    epoch. If `expiration` is excluded, the the :class:`CacheObject`
+    object has no expiration.
     """
     self._value = value
     self._expiration = expiration
@@ -56,24 +59,47 @@ class FSCache(object):
   """
   A class that manages a filesystem cache. Works like
   a dictionary and can decorate functions to make them
-  cached:
+  cached.
+
+  A :class:`pyfscache.FSCache` object is instantiated
+  with a `path` and optional lifetime keyword arguments:
+
+  .. code-block:: python
+
+      >>> c = FSCache('cache/dir', days=7)
+
+  This command creates a new FSCache instance at the given
+  `path` (``cache/dir``). Each item added by this cache
+  has a lifetime of 7 days, starting when the item (not the cache)
+  is created. If the `path` doesn't exist,
+  one is made. New items added to the cache are given a lifetime
+  expressed by the keyword arguments with potential keys of
+  ``years``, ``months``, ``weeks``, ``days``,
+  ``hours``, ``minutes``, ``seconds`` (see :func:`to_seconds`).
+  If no keyword arguments are given, then the
+  items added by the cache do not expire automatically.
+
+  Creating an :class:`pyfscache.FSCache` object does not purge
+  the cache in `path` if the cache already exists. Instead,
+  the :class:`pyfscache.FSCache` object will begin to use the
+  cache, loading items and storing items as necessary.
 
   .. code-block:: python
 
       >>> import os
       >>> import shutil
       >>> from pyfscache import *
-      >>> if os.path.exists('erase/me'):
-      ...   shutil.rmtree('erase/me')
+      >>> if os.path.exists('cache/dir'):
+      ...   shutil.rmtree('cache/dir')
       ... 
-      >>> c = FSCache('erase/me', days=7)
+      >>> c = FSCache('cache/dir', days=7)
       >>> c['some_key'] = "some_value"
       >>> c['some_key']
       'some_value'
-      >>> os.listdir('erase/me')
+      >>> os.listdir('cache/dir')
       ['PXBZzwEy3XnbOweuMtoPj9j=PwkfAsTXexmW2v05JD']
       >>> c.expire('some_key')
-      >>> os.listdir('erase/me')
+      >>> os.listdir('cache/dir')
       []
       >>> c['some_key'] = "some_value"
       >>> @c
@@ -86,10 +112,17 @@ class FSCache(object):
       'some other value'
       >>> doit('some input')
       'some other value'
-      >>> shutil.rmtree('erase/me')
+      >>> shutil.rmtree('cache/dir')
   """
   def __init__(self, path, **kwargs):
     """
+    A :class:`pyfscache.FSCache` object is instantiated
+    with a `path` and optional lifetime keyword arguments:
+
+  .. code-block:: python
+
+      >>> c = FSCache('cache/dir', days=7)
+
     Inits a new FSCache instance at the given `path`.
     If the `path` doesn't exist, one is made. New objects
     added to the cache are given a lifetime, expressed in the
@@ -99,13 +132,16 @@ class FSCache(object):
     If no keyword arguments are given, then the lifetime
     is considered to be infinite.
 
-    Creating an :class:`FSCache` object does not purge the
-    cache in `path` if the cache already exists. Instead,
-    the :class:`FSCache` object will begin to use the cache,
-    loading items, etc., as necessary.
+    Creating a :class:`pyfscache.FSCache` object does not purge
+    the cache in `path` if the cache already exists. Instead,
+    the :class:`pyfscache.FSCache` object will begin to use the
+    cache, loading items and storing items as necessary.
     """
     if kwargs:
       self._lifetime = to_seconds(**kwargs)
+      if self._lifetime <= 0:
+        msg = "Lifetime (%s seconds) is 0 or less." % self._lifetime
+        raise LifetimeError, msg
     else:
       self._lifetime = None
     self._loaded = {}
@@ -297,7 +333,7 @@ class FSCache(object):
     """
     Returns the names of the files in the cache on the
     filesystem. These are not keys but one-way hashes
-    (or "digests") of the keys (created by :func:`make_digest`).
+    (or "digests") of the keys created by :func:`make_digest`.
     """
     return os.listdir(self._path)
   def clear(self):
@@ -320,7 +356,12 @@ class FSCache(object):
     """
     Returns an expiry for the cache in seconds as if the start
     of the expiration period were the moment at which this
-    the :func:`expiry` function is called.
+    the method is called.
+
+    >>> import time
+    >>> c = FSCache('cache/dir', seconds=60)
+    >>> round(c.expiry() - time.time(), 3)
+    60.0
     """
     if self.lifetime is None:
       x = None
@@ -332,12 +373,12 @@ class FSCache(object):
 
 def make_digest(k):
   """
-  Creates a digest suitable for use within an FSCache object
-  from the key object `k`.
+  Creates a digest suitable for use within an :class:`phyles.FSCache`
+  object from the key object `k`.
 
-     >>> adict = {'a' : {'b':1}, 'f': []}
-     >>> make_digest(adict)
-     'a2VKynHgDrUIm17r6BQ5QcA5XVmqpNBmiKbZ9kTu0A'
+  >>> adict = {'a' : {'b':1}, 'f': []}
+  >>> make_digest(adict)
+  'a2VKynHgDrUIm17r6BQ5QcA5XVmqpNBmiKbZ9kTu0A'
   """
   s = cPickle.dumps(k)
   h = hashlib.sha256(s).digest()
