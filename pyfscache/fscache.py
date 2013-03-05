@@ -379,7 +379,10 @@ def auto_cache_function(f, cache):
   it is best to use `cache_function` instead and create a custom keyer.
   """
   m = inspect.getmembers(f)
-  fid = (f.func_name, inspect.getargspec(f))
+  try:
+    fid = (f.func_name, inspect.getargspec(f))
+  except (AttributeError, TypeError):
+    fid = (f.__name__, repr(type(f)))
   def _f(*args, **kwargs):
     k = (fid, args, kwargs)
     if k in cache:

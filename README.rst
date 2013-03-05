@@ -3,20 +3,19 @@ pyfscache
 
 A simple filesystem cache for python.
 
-Home Page & Repository
-----------------------
+Home Page, Documentation, & Repository
+--------------------------------------
 
-The phyles home page is at http://pyfscache.bravais.net
-and the source code is maintained at github:
-https://github.com/jcstroud/pyfscache/\.
+- **Home Page**: http://pyfscache.bravais.net
+- **Online Documentation**: http://pythonhosted.org/pyfscache/
+- **Code Repository**: https://github.com/jcstroud/pyfscache/
 
 
 Introduction
 ------------
 
 Pyfscache (python filesystem cache) is a filesystem cache
-that is easy to use. The principal class is
-`FSCache`,
+that is easy to use. The principal class is `FSCache`,
 instances of which may be used as decorators to create cached
 functions with very little coding overhead:
 
@@ -29,28 +28,30 @@ functions with very little coding overhead:
     def cached_doit(a, b, c):
       return [a, b, c]
 
-And that's it!
+It's that simple!
 
-Now, every time the function `cached_doit` is called with a
+Now, every time the function ``cached_doit`` is called with a
 particular set of arguments, the cache ``cache_it`` is inspected
 to see if an identical call has been made before. If it has, then
 the return value is retrieved from the ``cache_it`` cache. If not,
-the return value is calculated with `cached_doit`, stored in
+the return value is calculated with ``cached_doit``, stored in
 the cache, and then returned.
 
 
 Expiration
 ----------
 
-In the code above, the expiration for the ``cache`` is set to
-1137750 seconds (13 days, 4 hours, and 2.5 minutes). Values
-may be provided for ``years``, ``months``, ``weeks``, ``days``,
-``hours``, ``minutes``, and ``seconds``. The time is the
-total for all keywords.  
+In the code above, the expiration for ``cache_it`` is set to
+1,137,750 seconds (13 days, 4 hours, and 2.5 minutes),
+which means that every item created by ``cache_it`` has a lifetime
+of 1,137,750 seconds, beginning when the item is made (*not*
+beginning when ``cache_it`` is made). Values specifying lifetime
+may be provided with the keywords ``years``, ``months``, ``weeks``,
+``days``, ``hours``, ``minutes``, and ``seconds``. The lifetime is
+the total for all keywords.
 
 If these optional keyword arguments are not included, then items
-added by the :`FSCache` object never expire:
-
+added by the `FSCache` object never expire:
 
 .. code-block:: python
 
@@ -66,11 +67,42 @@ added by the :`FSCache` object never expire:
     `FSCache`.
 
 
+Works Like a Map
+----------------
+
+Instances of `FSCache` work like mapping objects, supporting
+item getting and setting:
+
+.. code-block:: python
+
+    >>> cache_it[('some', ['key'])] = {'some': 'value'}
+    >>> cache_it[('some', ['key'])]
+    {'some': 'value}
+
+However, deletion with the ``del`` statement only works on memory.
+To erase an item in the cache directory, use ``expire``:
+
+.. code-block:: python
+
+    >>> cache_it.get_loaded()
+    ['LIlWpBZL68MBJaXouRjFBL3fzScyxh5q56hqSZ3DBK']
+    >>> del cache_it[('some', ['key'])]
+    >>> cache_it.get_loaded()
+    []
+    >>> ('some', ['key']) in cache_it
+    True
+    >>> cache_it[('some', ['key'])]
+    {'some': 'value}
+    >>> cache_it.expire(('some', ['key']))
+    >>> ('some', ['key']) in cache_it
+    False
+
 Decorators
 ----------
 
-It is not necessary to use decorators, although their convenience
-is manifest in the example above:
+What if you didn't write the function you want to cache?
+Although their convenience is manifest in the example above,
+it is not necessary to use decorators:
 
 .. code-block:: python
 
@@ -82,3 +114,27 @@ is manifest in the example above:
       return [a, b, c]
 
     cached_doit = cache(uncached_doit)
+
+
+Versatility
+-----------
+
+`FSCache` objects should work on the vast majority of python
+"callables", including instance methods and even built-ins:
+
+.. code-block:: python
+
+    # a cached built-in
+    cached_list = cache_it(list)
+
+    # a cached instance method
+    def AClass(object):
+      @cahe_it
+      def some_cached_instance_method(self, a, r, g, s):
+        return (a + r) / (g * s)
+
+.. note::
+
+           The rule of thumb is that if python's *cPickle* module
+           can handle the expected arguments to the cached function,
+           then so can pyfscache.

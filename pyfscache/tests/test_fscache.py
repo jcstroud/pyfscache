@@ -6,10 +6,24 @@ import unittest
 
 from pyfscache.fscache import *
 
+
+TESTCACHE = 'test-cache'
+
+state = {'abort' : False}
+
+f = FSCache(TESTCACHE)
+
+class C(object):
+  @f
+  def doit(self, a, r, g, s):
+    if state['abort']:
+      raise Exception
+    return [a, r, g, s]
+
 class FSCacheTestCase(unittest.TestCase):
   def setUp(self):
     class C(object): pass
-    path_name = 'test-cache'
+    path_name = TESTCACHE
     self.path_name = os.path.abspath(path_name)
     self.f = FSCache(self.path_name)
     self.x = FSCache(self.path_name, seconds=0.3)
@@ -131,6 +145,16 @@ class FSCacheTestCase(unittest.TestCase):
     call_acfun()
     abort = True
     self.assertEquals(result, call_acfun())
+  def test_105_instancemethod(self):
+    state['abort'] = False
+    c = C()
+    c.doit(1, 2, 3, 4)
+    state['abort'] = True
+    self.assertEquals([1, 2, 3, 4], c.doit(1, 2, 3, 4))
+  def test_106_ctype(self):
+    cached_list = self.f(list)
+    alist = cached_list((1, 2, 3))
+    self.assertTrue(alist is cached_list((1, 2, 3)))
   def test_200_to_seconds(self):
     s = to_seconds(years=2.1, months=4.2, weeks=1.9, days=2,
                    hours=3.5, minutes=8,

@@ -1,1 +1,6 @@
+2013-03-05 Improved and slightly expanded documentation. Changed
+           keying slightly to allow for caching of more diverse
+           types of functions. Released 0.9.9.
+
 2013-03-04 Intial release 0.9.8.
+
