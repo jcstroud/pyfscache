@@ -128,7 +128,7 @@ Versatility
     cached_list = cache_it(list)
 
     # a cached instance method
-    def AClass(object):
+    class AClass(object):
       @cahe_it
       def some_cached_instance_method(self, a, r, g, s):
         return (a + r) / (g * s)
