@@ -55,7 +55,7 @@ pypi-upload-docs : html
 pypi-upload : all pypi-upload-docs
 	$(PYTHON) setup.py sdist upload
 
-test : clean
+test : clean $(VERMODULE)
 	$(PYTHON) setup.py test
 
 clean :
