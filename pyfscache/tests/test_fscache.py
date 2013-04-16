@@ -12,10 +12,11 @@ TESTCACHE = 'test-cache'
 
 state = {'abort' : False}
 
-f = FSCache(TESTCACHE)
 
 class C(object):
-  @f
+  def __init__(self):
+    f = FSCache(TESTCACHE)
+    self.doit = f(self.doit)
   def doit(self, a, r, g, s):
     if state['abort']:
       raise Exception
@@ -23,7 +24,7 @@ class C(object):
 
 class FSCacheTestCase(unittest.TestCase):
   def setUp(self):
-    class C(object): pass
+    # class C(object): pass
     path_name = TESTCACHE
     self.path_name = os.path.abspath(path_name)
     self.f = FSCache(self.path_name)
