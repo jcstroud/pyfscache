@@ -1,5 +1,0 @@
-from fscache import *
-import tests
-
-__all__ = ["FSCache", "make_key", "auto_cache_fun", "cache_fun"]
-

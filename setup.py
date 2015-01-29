@@ -2,11 +2,21 @@
 
 import os
 
+from StringIO import StringIO
+from ConfigParser import ConfigParser
 from setuptools import setup, find_packages
 
-import configobj
-
-info = configobj.ConfigObj('PackageInfo.cfg')
+# avoid sectionlesslessness (& case insensitivity) of ConfigParser
+# https://bugs.python.org/issue22253
+config_IO = StringIO()
+config_IO.write("[main]\n")
+with open("PackageInfo.cfg") as f:
+  config_IO.write(f.read())
+config_IO.seek(0, os.SEEK_SET)
+config = ConfigParser()
+config.optionxform = str
+config.readfp(config_IO)
+info = dict(config.items("main"))
 
 setup(name = info['PACKAGE'],
       version = "%(MAJOR)s.%(MINOR)s.%(MICRO)s%(TAG)s" % info,

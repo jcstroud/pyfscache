@@ -14,9 +14,20 @@ PRODUCTS = $(VERMODULE) $(DOCS)
 all : sdist
 
 LICENSE.txt :
-	$(PYTHON) -c 'exec("import configobj; \
-                            p = configobj.ConfigObj(\"PackageInfo.cfg\", \
-                                                    list_values=False); \
+	$(PYTHON) -c 'exec("import os; \
+                            from ConfigParser import ConfigParser; \
+                            from StringIO import StringIO; \
+                            config_IO = StringIO(); \
+                            config_IO.write(\"[main]\\n\"); \
+                            config_IO.write(open(\"PackageInfo.cfg\").read()); \
+                            config_IO.seek(0, os.SEEK_SET); \
+                            print config_IO.read(); \
+                            config_IO.seek(0, os.SEEK_SET); \
+                            config = ConfigParser(); \
+                            config.optionxform = str; \
+                            config.readfp(config_IO); \
+                            p = dict(config.items(\"main\")); \
+                            print p; \
                             t = open(\"$(LICENSE_TEMPLATE)\").read(); \
                             s = t % p; \
                             open(\"LICENSE.txt\", \"w\").write(s)")'
